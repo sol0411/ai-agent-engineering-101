@@ -38,6 +38,10 @@ def judge(answer: str, expected: str) -> bool:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--runs", type=int, default=3)
+    ap.add_argument("--only", choices=["react", "plan_exec"],
+                    help="run just one harness; used to top up the runs a "
+                         "daily rate limit killed without spending quota on "
+                         "the harness that already finished")
     args = ap.parse_args()
 
     task, expected = read_task()
@@ -52,7 +56,10 @@ def main():
         w = csv.writer(f)
         if new_file:
             w.writerow(HEADER)
-        for name, fn in (("react", run_react), ("plan_exec", run_plan_execute)):
+        harnesses = [("react", run_react), ("plan_exec", run_plan_execute)]
+        if args.only:
+            harnesses = [h for h in harnesses if h[0] == args.only]
+        for name, fn in harnesses:
             for _ in range(args.runs):
                 run_no += 1
                 lines = []
