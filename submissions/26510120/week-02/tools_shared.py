@@ -93,16 +93,21 @@ MODEL = os.environ.get(
 
 _client = None
 
+# Free-tier calls sometimes never come back. The SDK default is 600s, which
+# makes one stuck call cost ten minutes; 120s is long enough for a real answer
+# and short enough that a stuck call becomes a failed run instead of a hang.
+TIMEOUT = float(os.environ.get("AGENT_TIMEOUT", "120"))
+
 
 def _get_client():
     global _client
     if _client is None:
         if PROVIDER == "anthropic":
             import anthropic
-            _client = anthropic.Anthropic()
+            _client = anthropic.Anthropic(timeout=TIMEOUT)
         else:
             from openai import OpenAI
-            _client = OpenAI()
+            _client = OpenAI(timeout=TIMEOUT)
     return _client
 
 
